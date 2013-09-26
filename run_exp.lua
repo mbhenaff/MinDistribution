@@ -11,8 +11,8 @@ function loopOnGrid(nValPerDim, v, i)
       end
    else
       v[i] = 0
-      if i > 0 then
-	 return loopOnGrid(nValPerDim, v, i+1)
+      if i > 1 then
+	 return loopOnGrid(nValPerDim, v, i-1)
       else
 	 return nil
       end
@@ -21,10 +21,9 @@ end
 
 --debug
 v = torch.zeros(3)
-i = 1
-print(v)
+i = v:size(1)
 while i ~= nil do
-   loopOnGrid(2, v, i)
+   i=loopOnGrid(2, v, i)
    print (v)
 end
 
