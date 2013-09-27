@@ -7,6 +7,18 @@ printf = function(s,...)
 	return io.write(s:format(...))
 end
 
+function eigIndex(eigenvals)
+   local index = 0
+   for i = 1,eigenvals:size(1) do
+      if eigenvals[i] > 0 then
+	 index = index + 1
+      elseif eigenvals[i] < 0 then
+	 index = index - 1
+      end
+   end
+   return index
+end
+
 
 function analyze_model(model, criterion, nPtsPerDim, gridRange, data, gradThreshold) 
 	local criticalPts={}
@@ -48,7 +60,7 @@ function analyze_model(model, criterion, nPtsPerDim, gridRange, data, gradThresh
 		gradValues[indx:storage()]=gradNorm
 		if gradNorm < gradThreshold then
 			hessian=hessianPerturbationNet(feval, param, 1e-3)
-			e=torch.eig(hessian)
+			e=torch.eig(hessian)[{{},1}]
 			criticalPts[#criticalPts+1]={eigenvals=e,param=param:clone(),indx=indx:clone()}
 		end
 	end
@@ -66,8 +78,21 @@ data=data:reshape(data:size(1),data:size(2),1)
 
 loss,gradNorm,criticalPts=analyze_model(model,criterion,50,4,data,0.3)
 gradNorm:reshape(gradNorm:nElement())
-image.display(loss)
 gnuplot.hist(gradNorm,100)
 
+imdisp = torch.Tensor(3,loss:size(1), loss:size(2))
+for i = 1,3 do
+   imdisp[i]:copy(loss)
+end
 
-
+local maxLossDisplay = 3
+for i = 1,#criticalPts do
+   local indx = criticalPts[i]['indx']
+   local eigenvals = criticalPts[i]['eigenvals']
+   eigidx = eigIndex(eigenvals)
+   eigidx_normalized = (eigidx + eigenvals:size(1))/(eigenvals:size(1)*2)
+   imdisp[1][indx:storage()] = maxLossDisplay*eigidx_normalized
+   imdisp[2][indx:storage()] = maxLossDisplay*(1-eigidx_normalized)
+   imdisp[3][indx:storage()] = 0
+end
+image.display{image=imdisp, zoom=5, max=maxLossDisplay}
