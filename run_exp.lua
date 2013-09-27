@@ -3,9 +3,11 @@ require 'nn'
 require 'image'
 
 
+
 printf = function(s,...)
 	return io.write(s:format(...))
 end
+
 
 function analyze_model(model, criterion, nPtsPerDim, gridRange, data) 
 	local grid = torch.linspace(-gridRange/2,gridRange/2,nPtsPerDim)
