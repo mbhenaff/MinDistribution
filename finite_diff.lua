@@ -50,6 +50,30 @@ function hessianPerturbationNet(f, x, eps)
    return out
 end
 
+function hessianPerturbationNetAccurate(f, x, gradParam, eps)
+   eps = eps / x:norm()
+   local n = x:size(1)
+   local out = torch.Tensor(n, n)
+   local x0 = x:clone()
+   local x1 = x:clone()
+   local x2 = x:clone()
+   local gx1tmp = torch.Tensor(n)
+   for i = 1,n do
+      gradParam:zero()
+      x1[i] = x1[i] + eps
+      x2[i] = x2[i] - eps
+      local _,gx1 = f(x1)
+      gx1tmp:copy(gx1)
+      gradParam:zero()
+      local _,gx2 = f(x2)
+      out[i]:copy((gx1tmp - gx2)/(2*eps))
+      x1[i] = x1[i] - eps
+      x2[i] = x2[i] + eps
+   end
+   x:copy(x0)
+   return out
+end
+
 function hessianPerturbationNet2(f, x, eps)
    local n = x:size(1)
    local out = torch.Tensor(n, n)

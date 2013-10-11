@@ -81,6 +81,8 @@ function analyze_model(model, criterion, nPtsPerDim, gridRange, data, gradThresh
 	return lossValues,gradValues,criticalPts
 end
 
+
+-- number of points in the dataset
 nSamples=100
 
 -- model
@@ -90,28 +92,29 @@ model = nn.Sequential()
 model:add(nn.Linear(dimInputs, nHidden))
 model:add(nn.Threshold())
 model:add(nn.Linear(nHidden, 1))
---local layer1 = nn.CMul(dimInputs)
---model:add(layer1)
---local layer2 = nn.Mul(dimInputs)
---layer2.weight = layer1.weight[{{1,2}}]
---layer2.gradWeight = layer1.gradWeight[{{1,2}}]
---model:add(layer2)
 
+-- mean square loss function
 criterion=nn.MSECriterion()
 
 -- generate points
---data=torch.randn(1,nSamples,dimInputs):repeatTensor(2,1,1)
+-- number of points in each class
 local nClass1 = math.floor(nSamples/2)
 local nClass2 = math.ceil(nSamples/2)
+-- actually generate points
 data_class1 = sampleBallN(dimInputs, nClass1)
 data_class2 = sampleSphereN(dimInputs, nClass2) * 5
+-- put them in a single vector
 data = {torch.Tensor(nSamples, dimInputs), torch.Tensor(nSamples, 1)}
 data[1][{{1,nClass1},{}}]:copy(data_class1)
 data[1][{{nClass1+1,nSamples},{}}]:copy(data_class2)
+-- set their classes
 data[2][{{1,nClass1},{}}]:fill(-1)
 data[2][{{nClass1+1,nSamples},{}}]:fill(1)
 
-loss,gradNorm,criticalPts=analyze_model(model,criterion,2,4,data,0.3)
+-- go!
+local nPtsPerDim = 10 -- number of points per dimension
+local gridRange = 5 -- width of the hypercube
+loss,gradNorm,criticalPts=analyze_model(model,criterion,nPtsPerDim, gridRange,data,0.3)
 
 -- save data
 local filenamebase = 'criticalPts_' .. nHidden .. 'hidden_'
